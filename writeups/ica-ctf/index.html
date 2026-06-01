@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>ICA CTF — Credential Exposure &amp; PATH Hijacking to Full Linux Compromise</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">ICA CTF — Credential Exposure &amp; PATH Hijacking to
+Full Linux Compromise</h1>
+</header>
+<h1
+id="lab-report-exploiting-credential-exposure-and-path-hijacking-for-full-linux-system-compromise">Lab
+Report: Exploiting Credential Exposure and PATH Hijacking for Full Linux
+System Compromise.</h1>
+<h2 id="objectives">Objectives</h2>
+<ul>
+<li>To exploit a target and retrieve sensitive information.</li>
+</ul>
+<h2 id="background">Background</h2>
+<p>According to information from our intelligence network, ICA is
+working on a secret project. We need to find out what the project is.
+Once you have the access information, send them to us. We will place a
+backdoor to access the system later. You just focus on what the project
+is. You will probably have to go through several layers of security. The
+Agency has full confidence that you will successfully complete this
+mission. Good Luck, Agent!</p>
+<h2 id="tools-used">Tools Used</h2>
+<ul>
+<li>Kali Linux</li>
+<li>Gobuster</li>
+<li>Hydra</li>
+<li>Nmap</li>
+<li>Searchploit</li>
+<li><code>https://www.base64decode.org</code></li>
+</ul>
+<h2 id="methodology">Methodology</h2>
+<p>Starting, I run an Nmap scan to determine initial attack vectors.
+Thus, opened ports running vulnerable services and you can bet, I found
+some just as seen in the image below.</p>
+<p><img src="media/ICA/image1.png" /></p>
+<p>I then accessed the web service running on Port 80.</p>
+<p><img src="media/ICA/image2.png" /></p>
+<p>The webpage run on qdPM 9.2. I then searched for available exploit
+through searchploit<img src="media/ICA/image3.png" /></p>
+<p>Making an ExploitDB lookup, I found the perfect exploit to use but I
+did not proceed with it.</p>
+<p><img src="media/ICA/image4.png" /></p>
+<p>I actually fuzzed with Gobuster and identified the directory /core
+which contained some juicy info.</p>
+<p><img src="media/ICA/image5.png" /></p>
+<p>In the core directory, I selected config</p>
+<p><img src="media/ICA/image6.png" /></p>
+<p>Next, I saw and downloaded the databases.yml file which Exploitdb had
+suggested earlier. Well, manual fuzzing still got me to my destination
+lol.</p>
+<p><img src="media/ICA/image7.png" /></p>
+<p>Opening the databases.yml file got me seeing the MySQL backend
+database admin username and password as seen below.</p>
+<p><img src="media/ICA/image8.png" /></p>
+<p>I logged in to MySQL successfully with the identified
+credentials.</p>
+<p><img src="media/ICA/image9.png" /></p>
+<p>I dumped the entire database and selected from the staff table the
+users and their logins.</p>
+<p><img src="media/ICA/image10.png" /> <img
+src="media/ICA/image11.png" /></p>
+<p>The user logins were encoded in base64, hence I used <a
+href="https://www.base64decode.org/">https://www.base64decode.org/</a>
+to decode the passwords. I then created user and password text files to
+facilitate dictionaries for ssh bruteforce. I had two successful
+logins.</p>
+<p><img src="media/ICA/image12.png" /></p>
+<p>I logged into travis account via ssh and identified the user flag
+placed in the /home directory.</p>
+<p><img src="media/ICA/image13.png" /></p>
+<p>Having found the user flag, I was still inquisitive to look out for
+what dexter had on his /home directory. I got some CLUES from a note.txt
+placed in there.</p>
+<p><img src="media/ICA/image14.png" /></p>
+<p>I navigated back to travis' account to explore further. Using the
+command find / -perm -u=s -type f 2&gt;/dev/null, I searched for all
+files on the entire system that have the SUID permission bit set. I
+tried viewing the contents of /opt/get_access and realized it was
+gibberish.</p>
+<p><img src="media/ICA/image15.png" /></p>
+<p>I attempted to run ./opt/get_access as an executable and further run
+strings on it as seen below.</p>
+<p><img src="media/ICA/image16.png" /></p>
+<p>Moving on, I entered the command <strong>echo 'bin/sh' &gt;
+/tmp/cat</strong> which created a file /tmp/cat whose content was the
+text <strong>bin/sh</strong>. I then made the <strong>/tmp/cat</strong>
+file executable, so the system can run it as a program. Next, I hijacked
+the PATH variable using the command export PATH="/tmp:$PATH which puts
+<strong>/tmp</strong> first, and the system will find my malicious
+<strong>/tmp/cat</strong> file before the real
+<strong>/bin/cat</strong>. So, when I run cat, it will run my fake
+version instead. I then proceeded to run the ./opt/get_access to spawn a
+root shell.</p>
+<p><img src="media/ICA/image17.png" /></p>
+<p>The program <strong>get_access</strong> located in the
+<strong>/opt</strong> directory may have special privileges thus the
+"SetUID" bit that allows it to run as the root user. At some point, the
+<strong>get_access</strong> program internally calls the
+<strong>cat</strong> command (As seen in the strings command). Because
+of our hijacked PATH, it runs <strong>/tmp/cat</strong> instead of
+<strong>/bin/cat.</strong></p>
+<p>Gaining access needed me to elevate my shell privileges for an
+interactive one of which I used the python command seen in the image
+below. After, I changed directories to the root folder and cat the root
+flag. Viola!</p>
+<p><img src="media/ICA/image18.png" /></p>
+<h2 id="reflection">Reflection</h2>
+<p>This project got my thoughts up on the fact that, a system's security
+is only as strong as its weakest configuration. The successful
+compromise was as a result of the chaining of two fundamental
+misconfigurations. The exposure of sensitive database credentials
+provided the initial foothold, while the misconfigured SetUID binary,
+which trusted the user-controlled PATH environment, served as the direct
+conduit to root privileges. Ultimately, it reinforces the necessity of
+rigorous system hardening, strict adherence to the principle of least
+privilege, and regular audits for misplaced credentials and insecure
+file permissions.</p>
+</body>
+</html>

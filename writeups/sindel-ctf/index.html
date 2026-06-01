@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>SINDEL CTF — IDOR Masterclass Writeup</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">SINDEL CTF — IDOR Masterclass Writeup</h1>
+</header>
+<h1 id="sindel-ctf--idor-masterclass-writeup">SINDEL CTF — IDOR
+Masterclass Writeup</h1>
+<blockquote>
+<p><strong>18/18 flags captured</strong> across 11 IDOR categories on
+the SINDEL ("Shadow Intelligence Network") lab. Engagement performed
+black-box, starting with zero credentials.</p>
+</blockquote>
+<p><img src="images/01_all_flags_captured.png"
+alt="All flags captured" /></p>
+<hr />
+<h2 id="target">Target</h2>
+<p><strong>SINDEL</strong> — a fictional spy-agency web application
+running on <code>localhost:8888</code>. The lab is purpose-built to
+teach <strong>Insecure Direct Object Reference (IDOR)</strong>
+vulnerabilities and contains 18 distinct flags spread across 11
+vulnerability classes:</p>
+<ul>
+<li>Numeric ID, UUID, Phone, Email, Username, Slug-based lookups</li>
+<li>Composite identifier verification (phone+DOB, email+code,
+name+birth)</li>
+<li>File path access</li>
+<li>Encoded references (Base64, Hex, URL)</li>
+<li>Hash-based identifiers (MD5, SHA1)</li>
+<li>Token-based access (magic link, password reset, QR code)</li>
+</ul>
+<hr />
+<h2 id="tldr--the-story">TL;DR — The Story</h2>
+<ol type="1">
+<li><strong>Recon</strong> revealed that unauthenticated pages leak the
+entire IDOR cookbook in client-side HTML and JavaScript.</li>
+<li><strong>Pre-auth bypass</strong> via a sequential magic-link
+endpoint leaked every operative's full PII without credentials.</li>
+<li><strong>Foothold</strong> as the default training account — bio
+literally said <em>"Standard entry point"</em> — password guessed via
+regional naming convention (<code>Yaw@2025</code>).</li>
+<li><strong>Systematic IDOR sweep</strong> through every identifier type
+the API exposed. Every endpoint authenticated the user but failed to
+authorize the request.</li>
+<li><strong>4-digit verification code brute-forced</strong> in seconds —
+no rate limiting.</li>
+<li><strong>Account takeover</strong> via forgeable password-reset
+tokens, enabling a Recruit (ALPHA clearance) to hijack a Senior
+Operative (OMEGA clearance) and exfiltrate a TOP SECRET mission.</li>
+</ol>
+<p><strong>Root cause across all 18 findings:</strong> the application
+checks <em>"are you logged in?"</em> but never <em>"are you allowed to
+see this?"</em></p>
+<hr />
+<h2 id="phase-1--reconnaissance">Phase 1 — Reconnaissance</h2>
+<p>Before touching authenticated endpoints, I mapped what the app
+reveals to unauthenticated visitors. Every single HTML page in the
+application ships its full source and JavaScript before any login check
+fires — the redirect happens client-side.</p>
+<p>The page <code>/tokens.html</code> is especially generous. It
+literally contains JavaScript that computes the exploit primitives:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> magic  <span class="op">=</span> <span class="vs">`magic-</span><span class="sc">${</span><span class="bu">String</span>(id)<span class="op">.</span><span class="fu">padStart</span>(<span class="dv">6</span><span class="op">,</span><span class="st">&#39;0&#39;</span>)<span class="sc">}</span><span class="vs">-sindel`</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> reset  <span class="op">=</span> <span class="fu">btoa</span>(<span class="vs">`reset:</span><span class="sc">${</span>id<span class="sc">}</span><span class="vs">:sindel`</span>)<span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> qr     <span class="op">=</span> <span class="vs">`QR-</span><span class="sc">${</span><span class="bu">String</span>(id<span class="op">*</span><span class="dv">1337</span>)<span class="op">.</span><span class="fu">padStart</span>(<span class="dv">8</span><span class="op">,</span><span class="st">&#39;0&#39;</span>)<span class="sc">}</span><span class="vs">`</span><span class="op">;</span></span></code></pre></div>
+<p><code>/access.html</code> documents the base64, hex, and URL encoding
+patterns. <code>/verify.html</code> tells the user that the verification
+code = <code>agent_id × 1111</code>.</p>
+<p><strong>Finding:</strong> Information disclosure of
+identifier-generation algorithms in client-side code.</p>
+<hr />
+<h2 id="phase-2--pre-auth-data-exposure-critical">Phase 2 — Pre-Auth
+Data Exposure (Critical)</h2>
+<p>The magic-link endpoint <code>/api/auth/magic</code> is a token-based
+authentication endpoint by design — so it doesn't require any session.
+The vulnerability: it accepts <strong>any</strong> sequential token, not
+just one issued to a specific user.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="st">&quot;http://localhost:8888/api/auth/magic?token=magic-000001-sindel&quot;</span></span></code></pre></div>
+<p><img src="images/02_unauth_bypass.png"
+alt="Unauthenticated bypass" /></p>
+<p>The response contains agent #1's full dossier: name, DOB, phone, bank
+account, safe house GPS coordinates, and the flag
+<code>[REDACTED]</code>.</p>
+<p>Incrementing the token from <code>magic-000001-sindel</code> through
+<code>magic-000005-sindel</code> enumerated <strong>every agent in the
+system</strong> with zero authentication.</p>
+<p><strong>Impact:</strong> Full PII disclosure of every operative,
+including operational details like safe house coordinates. No
+credentials required.</p>
+<hr />
+<h2 id="phase-3--foothold">Phase 3 — Foothold</h2>
+<p>The magic-link enumeration revealed agent #5 (codename
+<strong>SHADOW</strong>, real name Yaw Asante). The bio gave it
+away:</p>
+<blockquote>
+<p><em>"New recruit undergoing field training. Standard entry
+point."</em></p>
+</blockquote>
+<p>I guessed the default password using the regional naming convention
+<code>{FirstName}@2025</code> (the application branding indicates
+Ghanaian origin). Hit on the first try.</p>
+<p><img src="images/06_foothold_login.png" alt="Foothold" /></p>
+<p>Now authenticated as the lowest-privilege user (Recruit, ALPHA
+clearance). Every IDOR test from here forward proves that a
+low-privilege user can read higher-privilege users' data — the textbook
+IDOR demonstration.</p>
+<hr />
+<h2 id="phase-4--systematic-idor-sweep">Phase 4 — Systematic IDOR
+Sweep</h2>
+<p>I targeted agent #1 (PHANTOM, Senior Operative, OMEGA clearance) for
+every IDOR class. The API exposed the same agent data through 15+
+different lookup endpoints, each using a different identifier type:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Class</th>
+<th>Endpoint</th>
+<th>Identifier</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Numeric ID</td>
+<td><code>/api/agents/1</code></td>
+<td>Sequential integer</td>
+</tr>
+<tr class="even">
+<td>UUID</td>
+<td><code>/api/missions/uuid/{uuid}</code></td>
+<td>Mission UUID</td>
+</tr>
+<tr class="odd">
+<td>Phone</td>
+<td><code>/api/agents/phone/+233201110001</code></td>
+<td>Ghana phone format</td>
+</tr>
+<tr class="even">
+<td>Email</td>
+<td><code>/api/agents/email/kira@sindel.ops</code></td>
+<td>Email address</td>
+</tr>
+<tr class="odd">
+<td>Username</td>
+<td><code>/api/agents/u/phantom_k</code></td>
+<td><code>firstname_l</code> pattern</td>
+</tr>
+<tr class="even">
+<td>Slug</td>
+<td><code>/api/intel/phantom-intel-alpha</code></td>
+<td><code>{codename}-intel-alpha</code></td>
+</tr>
+<tr class="odd">
+<td>Base64</td>
+<td><code>/api/access/b64/MQ==</code></td>
+<td>base64("1")</td>
+</tr>
+<tr class="even">
+<td>Hex</td>
+<td><code>/api/access/hex/31</code></td>
+<td>hex("1")</td>
+</tr>
+<tr class="odd">
+<td>URL</td>
+<td><code>/api/access/url/agent_1</code></td>
+<td><code>agent_{id}</code></td>
+</tr>
+<tr class="even">
+<td>MD5</td>
+<td><code>/api/agents/hash/md5/...</code></td>
+<td>MD5(email)</td>
+</tr>
+<tr class="odd">
+<td>SHA1</td>
+<td><code>/api/agents/hash/sha1/...</code></td>
+<td>SHA1(username)</td>
+</tr>
+<tr class="even">
+<td>File Path</td>
+<td><code>/api/files/read?path=agents/agent_001.txt</code></td>
+<td>File system path</td>
+</tr>
+<tr class="odd">
+<td>Magic Link</td>
+<td><code>/api/auth/magic?token=...</code></td>
+<td><code>magic-{id}-sindel</code></td>
+</tr>
+<tr class="even">
+<td>Reset Token</td>
+<td><code>/api/auth/reset</code></td>
+<td>base64("reset:{id}:sindel")</td>
+</tr>
+<tr class="odd">
+<td>QR Token</td>
+<td><code>/api/auth/qr/QR-00001337</code></td>
+<td><code>QR-{id*1337}</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Every endpoint returned data the Recruit should not have
+access to.</strong></p>
+<p><strong>The lesson:</strong> Encoding or hashing an identifier
+(Base64, hex, MD5, SHA1) doesn't make it a secret — it's a
+transformation of public data. The fix isn't a stronger identifier; it's
+a server-side authorization check on every request.</p>
+<hr />
+<h2 id="phase-5--composite-idor--brute-force">Phase 5 — Composite IDOR +
+Brute Force</h2>
+<p>Three endpoints required <em>two</em> fields together, designed to
+feel safer:</p>
+<ul>
+<li><code>/api/verify/identity</code> — phone + DOB</li>
+<li><code>/api/verify/code</code> — email + 4-digit code</li>
+<li><code>/api/verify/personnel</code> — name + birth date</li>
+</ul>
+<p>Two of them fell immediately — I already had everyone's phone, DOB,
+name, and email from the magic-link leak.</p>
+<p>The third (<code>/api/verify/code</code>) used a 4-digit code with a
+hinted formula (<code>id × 1111</code>). The hint turned out to be wrong
+(code for agent 1 was actually <code>2111</code>), but with <strong>no
+rate limiting</strong> I brute-forced the full 10,000-code space in
+under a minute.</p>
+<p><img src="images/05_bruteforce_demo.png"
+alt="Brute force success" /></p>
+<p><strong>Lesson:</strong> Combining two pieces of low-entropy,
+leakable data doesn't create real authentication. Short numeric codes
+without rate limiting are equivalent to no code at all.</p>
+<hr />
+<h2 id="phase-6--privilege-escalation--account-takeover">Phase 6 —
+Privilege Escalation &amp; Account Takeover</h2>
+<p>The password-reset endpoint had a critical secondary bug: it accepted
+an optional <code>new_password</code> parameter alongside the forgeable
+token. Combined with the predictable token format
+(<code>base64("reset:{id}:sindel")</code>), that's a full account
+takeover primitive.</p>
+<p>The attack chain:</p>
+<ol type="1">
+<li><strong>Forge</strong> reset token for agent 1:
+<code>base64("reset:1:sindel")</code> =
+<code>cmVzZXQ6MTpzaW5kZWw=</code></li>
+<li><strong>Hijack</strong> PHANTOM by sending the token +
+<code>new_password</code></li>
+<li><strong>Log in</strong> as PHANTOM with the new password</li>
+<li><strong>Dump</strong> PHANTOM's classified missions (a Recruit can't
+see them)</li>
+<li><strong>Steal</strong> the mission UUID</li>
+<li><strong>Switch back</strong> to the Recruit JWT and call
+<code>/api/missions/uuid/{stolen-uuid}</code> — that triggers the final
+UUID-based IDOR flag</li>
+</ol>
+<p><img src="images/03_privesc_chain.png"
+alt="Privilege escalation chain" /></p>
+<p>The exfiltrated mission: <strong>Operation Nightfall</strong> —
+<em>"Neutralise HVT in grid 77A"</em>, target Asset Kofi Mensah. TOP
+SECRET classification, accessed by a Recruit through one chained
+vulnerability.</p>
+<p><strong>Lesson:</strong> Multiple individually-minor bugs (forgeable
+tokens, missing authorization, no email confirmation on password reset)
+chain together into complete account takeover. The whole is greater than
+the sum of its parts.</p>
+<hr />
+<h2 id="all-18-flags">All 18 Flags</h2>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Class</th>
+<th>Flag</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>I1</td>
+<td>Numeric ID</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="even">
+<td>I2</td>
+<td>UUID Mission</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="odd">
+<td>I3</td>
+<td>Phone</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="even">
+<td>I4</td>
+<td>Email</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="odd">
+<td>I5</td>
+<td>Username</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="even">
+<td>I6</td>
+<td>Slug</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="odd">
+<td>I7a</td>
+<td>Phone + DOB</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="even">
+<td>I7b</td>
+<td>Email + Code</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="odd">
+<td>I7c</td>
+<td>Name + Birth</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="even">
+<td>I8</td>
+<td>File Path</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="odd">
+<td>I9a</td>
+<td>Base64</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="even">
+<td>I9b</td>
+<td>Hex</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="odd">
+<td>I9c</td>
+<td>URL</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="even">
+<td>I10a</td>
+<td>MD5(email)</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="odd">
+<td>I10b</td>
+<td>SHA1(username)</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="even">
+<td>I11a</td>
+<td>Magic Link</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="odd">
+<td>I11b</td>
+<td>Reset Token</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+<tr class="even">
+<td>I11c</td>
+<td>QR Token</td>
+<td><code>[REDACTED]</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="key-takeaways">Key Takeaways</h2>
+<ol type="1">
+<li><p><strong>Authentication ≠ authorization.</strong> Verifying that a
+user is logged in says nothing about whether they should access a
+specific resource. Every endpoint that accepts an identifier needs a
+server-side check: <em>"does this user own / have rights to this
+object?"</em></p></li>
+<li><p><strong>Encoded identifiers are not secrets.</strong> Base64,
+hex, MD5, SHA1 of public data is still public data. An attacker who
+knows the input pattern derives the identifier trivially.</p></li>
+<li><p><strong>Sequential/predictable tokens are guessable IDs in
+disguise.</strong> Magic links, password reset tokens, and QR codes must
+be cryptographically random and single-use.</p></li>
+<li><p><strong>Client-side code is public.</strong> Anything in your
+HTML or JavaScript — including identifier-generation algorithms, API
+maps, and "hidden" hints — is reconnaissance material for an
+attacker.</p></li>
+<li><p><strong>Rate limiting matters.</strong> A 4-digit code with no
+rate limiting offers no security. Lockout, exponential backoff, or
+CAPTCHA on sensitive verification endpoints.</p></li>
+<li><p><strong>Bug chains kill.</strong> Three individually-low-severity
+issues (predictable token, missing auth on reset, optional
+<code>new_password</code> field) combined into a full account
+takeover.</p></li>
+</ol>
+<hr />
+<h2 id="tools-used">Tools Used</h2>
+<ul>
+<li><strong>curl</strong> + <strong>jq</strong> for API
+exploitation</li>
+<li><strong>Burp Suite</strong> for initial request capture and
+proxying</li>
+<li><strong>Bash</strong> for brute-force automation</li>
+<li><strong>Standard hashing utilities</strong> (<code>md5sum</code>,
+<code>sha1sum</code>, <code>base64</code>, <code>xxd</code>)</li>
+</ul>
+<hr />
+<h2 id="lab-source">Lab Source</h2>
+<p><a href="https://github.com/">SPECIALITY-PRO-LABS / sindel-ctf</a> —
+IDOR-focused training environment.</p>
+<p>Designed for educational purposes. All exploitation performed on a
+local Docker container.</p>
+</body>
+</html>

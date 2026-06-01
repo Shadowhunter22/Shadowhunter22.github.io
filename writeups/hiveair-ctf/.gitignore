@@ -1,0 +1,19 @@
+# OS / editor artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Backups
+*.bak
+*.backup
+
+# Logs
+*.log
+
+# Local notes (in case you keep working notes here)
+notes.md
+notes/
